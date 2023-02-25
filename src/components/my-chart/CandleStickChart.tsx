@@ -67,6 +67,10 @@ class Scales {
   constructor(core: CandleStickChartCore) {
     this._core = core;
     this.update();
+    this.getPixelForPrice = this.getPixelForPrice.bind(this);
+    this.getPixelForDate = this.getPixelForDate.bind(this);
+
+    this._setupZoom();
   }
 
   public update() {
@@ -85,6 +89,19 @@ class Scales {
     y.y2 = margin;
 
     this._findHigherValues();
+  }
+
+  public getPixelForPrice(price: number): number {
+    const {y, size} = this._constraints;
+    const {margin} = this._core.getConstraints();
+    const amount = this._calculateAmountRange();
+    return this._core.fromBottom(margin + size.y + price * y.dy / amount);
+  }
+
+  public getPixelForDate(date: number): number {
+    const {x, size} = this._constraints;
+    const {margin} = this._core.getConstraints();
+    return margin + size.x + (x.max - date) * x.dx / x.dt;
   }
 
   public drawAxies(ctx: CanvasRenderingContext2D) {
@@ -110,7 +127,6 @@ class Scales {
   }
 
   private _drawXMeasures(ctx: CanvasRenderingContext2D) {
-    const {fromBottom} = this._core;
     const {margin} = this._core.getConstraints();
     const {x, size} = this._constraints;
 
@@ -182,6 +198,13 @@ class Scales {
     return amount + amount * y.interval * 2;
   }
 
+  private _setupZoom() {
+    this._core.getCanvas().addEventListener('wheel', e => {
+      const delta = e.deltaX || ((e as unknown as any).wheelDeltaX as number);
+      
+    });
+  }
+
   // .private _scaleY(y: number) {
   //   const {y: yAxis} = this._constraints;
   //   return (y*100) / Math.abs(yAxis.y2 - yAxis.y1);
@@ -250,6 +273,20 @@ class CandleStickChartCore {
     this._drawBackground(ctx);
     this._scales.drawAxies(ctx);
     this._scales.drawMeasures(ctx);
+    this._plot(ctx);
+  }
+
+  private _plot(ctx: CanvasRenderingContext2D) {
+    const {getPixelForPrice, getPixelForDate} = this._scales;
+    const data = this._data;
+    if (data.length < 1) return;
+    ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
+    ctx.beginPath();
+    ctx.moveTo(getPixelForDate(data[0].time), getPixelForPrice(data[0].value));
+    data.forEach(d => {
+      ctx.lineTo(getPixelForDate(d.time), getPixelForPrice(d.value));
+    });
+    ctx.stroke();
   }
   
   private _drawBackground(ctx: CanvasRenderingContext2D) {

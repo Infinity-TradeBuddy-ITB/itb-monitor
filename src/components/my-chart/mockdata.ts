@@ -52,6 +52,6 @@ function simulateStockPrice(
   return prices;
 }
 
-const fluctuations: Fluctuation[] = simulateStockPrice(new Date('2022/01/01'), 100, 0.05, 0.2, 1, 252, 12345);
+const fluctuations: Fluctuation[] = simulateStockPrice(new Date('2022/01/01'), 100, 0.05, 0.2, 1, 252, 645392);
 
 export default fluctuations;
