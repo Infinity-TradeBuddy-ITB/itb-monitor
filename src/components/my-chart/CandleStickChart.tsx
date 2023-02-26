@@ -27,11 +27,13 @@ class Axis {
 class TimeAxis extends Axis {
   public max = 0;
   public min = 0;
+  public zoom = 0;
   public locale = {
     locale: 'en',
     config: Object.freeze({
-      day: 'numeric',
-      month: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
     }),
   };
 
@@ -40,7 +42,19 @@ class TimeAxis extends Axis {
   }
 
   public get dt() {
-    return this.max - this.min;
+    return this.max - this.base;
+  }
+
+  public get base() {
+    return this.max - 60000;
+  }
+
+  public get clipWidth() {
+    return this.dt * (1 + this.zoom);
+  }
+
+  public get clipBase() {
+    return this.max - this.clipWidth;
   }
 }
 
@@ -69,8 +83,14 @@ class Scales {
     this.update();
     this.getPixelForPrice = this.getPixelForPrice.bind(this);
     this.getPixelForDate = this.getPixelForDate.bind(this);
+    this.getConstraints = this.getConstraints.bind(this);
 
+    this._constraints.x.interval = 0.17;
     this._setupZoom();
+  }
+
+  public getConstraints() {
+    return this._constraints;
   }
 
   public update() {
@@ -95,13 +115,14 @@ class Scales {
     const {y, size} = this._constraints;
     const {margin} = this._core.getConstraints();
     const amount = this._calculateAmountRange();
-    return this._core.fromBottom(margin + size.y + price * y.dy / amount);
+    return this._core.fromBottom(margin + size.y + (price * y.dy) / amount);
   }
 
   public getPixelForDate(date: number): number {
-    const {x, size} = this._constraints;
+    const {fromRight} = this._core;
+    const {x} = this._constraints;
     const {margin} = this._core.getConstraints();
-    return margin + size.x + (x.max - date) * x.dx / x.dt;
+    return fromRight(margin + ((x.max - date) * x.dx) / x.clipWidth);
   }
 
   public drawAxies(ctx: CanvasRenderingContext2D) {
@@ -120,7 +141,7 @@ class Scales {
   }
 
   public drawMeasures(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = 'rgba(63, 63, 63, 1)';
+    ctx.strokeStyle = 'rgba(63, 63, 63, 1)';
 
     this._drawXMeasures(ctx);
     this._drawYMeasures(ctx);
@@ -139,7 +160,7 @@ class Scales {
       xPosition += xPositionUnit,
       xValue += xValueUnit
     ) {
-      this._drawXMark(ctx, margin + size.x + xPosition, x.min + xValue);
+      this._drawXMark(ctx, margin + size.x + xPosition, x.clipBase + xValue);
     }
   }
 
@@ -200,8 +221,10 @@ class Scales {
 
   private _setupZoom() {
     this._core.getCanvas().addEventListener('wheel', e => {
-      const delta = e.deltaX || ((e as unknown as any).wheelDeltaX as number);
-      
+      const delta = e.deltaY || ((e as unknown as any).wheelDeltaX as number);
+      this._constraints.x.zoom += delta / 10000;
+      this._core.updateTimeClip();
+      this._core.render();
     });
   }
 
@@ -213,10 +236,15 @@ class Scales {
 
 class CandleStickChartCore {
   private readonly _canvas: HTMLCanvasElement;
+  private readonly _ctx: CanvasRenderingContext2D;
   private readonly _scales: Scales;
   private readonly _data: Fluctuation[];
   private readonly _constraints = {
     margin: 16,
+    timeClip: {
+      t1: 0,
+      t2: 0,
+    },
   };
 
   constructor(canvas: HTMLCanvasElement, data: Fluctuation[]) {
@@ -225,15 +253,19 @@ class CandleStickChartCore {
 
     this.fromBottom = this.fromBottom.bind(this);
     this.fromRight = this.fromRight.bind(this);
+    this.updateTimeClip = this.updateTimeClip.bind(this);
+    this.render = this.render.bind(this);
 
     this._scales = new Scales(this);
+    this.updateTimeClip();
+
     canvas.width = window.innerWidth - 16;
     canvas.height = window.innerHeight - 16;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas context not initialized!');
+    this._ctx = ctx;
     // .requestAnimationFrame(() => this._loop(ctx));
-
-    this._loop(ctx);
+    this.render();
   }
 
   public push(data: Fluctuation) {
@@ -260,33 +292,72 @@ class CandleStickChartCore {
     return this._data;
   }
 
-  private _loop(ctx: CanvasRenderingContext2D) {
-    // . this._update();
-    this._render(ctx);
+  public updateTimeClip() {
+    const {x} = this._scales.getConstraints();
+    const {timeClip} = this._constraints;
+
+    timeClip.t1 = this._binarySearch(x.clipBase);
+    timeClip.t2 = this._binarySearch(x.clipBase + x.clipWidth);
+
+    console.log(timeClip.t1, x.clipBase);
+    console.log(timeClip.t2, x.clipBase + x.clipWidth);
   }
 
-  // . private _update() {
-
-  // }
-
-  private _render(ctx: CanvasRenderingContext2D) {
+  public render() {
+    const ctx = this._ctx;
     this._drawBackground(ctx);
     this._scales.drawAxies(ctx);
     this._scales.drawMeasures(ctx);
     this._plot(ctx);
   }
 
-  private _plot(ctx: CanvasRenderingContext2D) {
-    const {getPixelForPrice, getPixelForDate} = this._scales;
+  private _binarySearch(time: number): number {
+    const {floor} = Math;
     const data = this._data;
+
+    let min = 0;
+    let max = data.length - 1;
+    let pivot = floor(max / 2);
+    while (pivot !== min && pivot !== max) {
+      const t = data[pivot].time;
+      if (time > t) {
+        min = pivot;
+        pivot += floor((max - pivot) / 2);
+      } else if (time < t) {
+        max = pivot;
+        pivot -= floor((pivot - min) / 2);
+      } else if (t === time) {
+        break;
+      }
+    }
+
+    return pivot;
+  }
+
+  private _plot(ctx: CanvasRenderingContext2D) {
+    const {margin} = this._constraints;
+    const {getPixelForPrice, getPixelForDate} = this._scales;
+    const {x, y, size} = this._scales.getConstraints();
+    const {t1, t2} = this._constraints.timeClip;
+    const data = this._data;
+
     if (data.length < 1) return;
+
+    ctx.save();
+    ctx.rect(margin + size.x, margin, x.dx, y.dy);
+    ctx.clip();
+
     ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
     ctx.beginPath();
-    ctx.moveTo(getPixelForDate(data[0].time), getPixelForPrice(data[0].value));
-    data.forEach(d => {
+    ctx.moveTo(getPixelForDate(data[t1].time), getPixelForPrice(data[t1].value));
+
+    for (let i = t1 + 1; i <= t2; i++) {
+      const d = data[i];
       ctx.lineTo(getPixelForDate(d.time), getPixelForPrice(d.value));
-    });
+    }
+
     ctx.stroke();
+    ctx.restore();
   }
   
   private _drawBackground(ctx: CanvasRenderingContext2D) {

@@ -1,11 +1,11 @@
 
 # TODO
 
-  - Alterar função *simulateStockPrice* para gerar flutuações no período de um dia
-  - Clipar o plot dos dados no período de 1 minuto
-  - Subdividir em 10 segundos
+  - Alterar função *simulateStockPrice* para gerar flutuações no período de um dia [OK]
+  - Clipar o plot dos dados no período de 1 minuto [OK]
+  - Subdividir em 10 segundos [OK]
   - Implementar navegação por grabbing usando somando um valor de movimento ao clip no eixo x
-  - Implementar o zoom multiplicando um fator pelo tamanho do clip*
+  - Implementar o zoom multiplicando um fator pelo tamanho do clip* [OK]
   - Implementar atualização em tempo real do gráfico
     - Avaliar uso de processamento dos dados em chunks para otimização
   - Organizar o código
