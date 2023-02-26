@@ -295,12 +295,17 @@ class CandleStickChartCore {
   public updateTimeClip() {
     const {x} = this._scales.getConstraints();
     const {timeClip} = this._constraints;
+    const data = this._data;
 
     timeClip.t1 = this._binarySearch(x.clipBase);
-    timeClip.t2 = this._binarySearch(x.clipBase + x.clipWidth);
+    if (timeClip.t1 > 0 && data[timeClip.t1].time > x.clipBase) {
+      timeClip.t1--;
+    }
 
-    console.log(timeClip.t1, x.clipBase);
-    console.log(timeClip.t2, x.clipBase + x.clipWidth);
+    timeClip.t2 = this._binarySearch(x.clipBase + x.clipWidth);
+    if (timeClip.t2 < (data.length - 1) && data[timeClip.t2].time < (x.clipBase + x.clipWidth)) {
+      timeClip.t2++;
+    }
   }
 
   public render() {
