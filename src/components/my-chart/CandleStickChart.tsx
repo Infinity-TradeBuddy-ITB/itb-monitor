@@ -28,6 +28,7 @@ class TimeAxis extends Axis {
   public max = 0;
   public min = 0;
   public zoom = 0;
+  public clipRight = 0;
   public locale = {
     locale: 'en',
     config: Object.freeze({
@@ -54,7 +55,11 @@ class TimeAxis extends Axis {
   }
 
   public get clipBase() {
-    return this.max - this.clipWidth;
+    return (this.max - this.clipWidth) + this.clipRight;
+  }
+
+  public get clipMax() {
+    return this.max + this.clipRight;
   }
 }
 
@@ -74,6 +79,7 @@ class Scales {
     },
     x: new TimeAxis(),
     y: new PriceAxis(),
+    grabbing: false,
   };
 
   private readonly _core: CandleStickChartCore;
@@ -87,6 +93,7 @@ class Scales {
 
     this._constraints.x.interval = 0.17;
     this._setupZoom();
+    this._setupGrabbing();
   }
 
   public getConstraints() {
@@ -122,7 +129,7 @@ class Scales {
     const {fromRight} = this._core;
     const {x} = this._constraints;
     const {margin} = this._core.getConstraints();
-    return fromRight(margin + ((x.max - date) * x.dx) / x.clipWidth);
+    return fromRight(margin + (((x.clipMax - date) * x.dx) / x.clipWidth));
   }
 
   public drawAxies(ctx: CanvasRenderingContext2D) {
@@ -228,6 +235,25 @@ class Scales {
     });
   }
 
+  private _setupGrabbing() {
+    this._core.getCanvas().addEventListener('mousedown', () => {
+      this._constraints.grabbing = true;
+      this._core.getCanvas().style.cursor = 'grabbing';
+    });
+    window.addEventListener('mouseup', () => {
+      this._constraints.grabbing = false;
+      this._core.getCanvas().style.cursor = 'default';
+    });
+    window.addEventListener('mousemove', e => {
+      if (this._constraints.grabbing) {
+        const {x} = this._constraints;
+        x.clipRight -= e.movementX * 100;
+        this._core.updateTimeClip();
+        this._core.render();
+      }
+    });
+  }
+
   // .private _scaleY(y: number) {
   //   const {y: yAxis} = this._constraints;
   //   return (y*100) / Math.abs(yAxis.y2 - yAxis.y1);
@@ -302,8 +328,8 @@ class CandleStickChartCore {
       timeClip.t1--;
     }
 
-    timeClip.t2 = this._binarySearch(x.clipBase + x.clipWidth);
-    if (timeClip.t2 < (data.length - 1) && data[timeClip.t2].time < (x.clipBase + x.clipWidth)) {
+    timeClip.t2 = this._binarySearch(x.clipMax);
+    if (timeClip.t2 < (data.length - 1) && data[timeClip.t2].time < (x.clipMax)) {
       timeClip.t2++;
     }
   }
