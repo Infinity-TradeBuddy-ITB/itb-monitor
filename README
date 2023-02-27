@@ -6,9 +6,8 @@
   - Subdividir em 10 segundos [OK]
   - Implementar navegação por grabbing usando somando um valor de movimento ao clip no eixo x [OK]
   - Implementar o zoom multiplicando um fator pelo tamanho do clip* [OK]
-  - Implementar atualização em tempo real do gráfico
-    - Avaliar uso de processamento dos dados em chunks para otimização
-  - Organizar o código
+  - Implementar atualização em tempo real do gráfico [OK]
+  - Organizar o código [OK]
 
 
 #### Nota de rodapé
