@@ -1,5 +1,5 @@
 
-# TODO
+## PRIMEIRA ITERAÇÃO
 
   - Alterar função *simulateStockPrice* para gerar flutuações no período de um dia [OK]
   - Clipar o plot dos dados no período de 1 minuto [OK]
@@ -19,5 +19,10 @@
   x2 += zoom
   ```
 
+## SEGUNDA ITERAÇÃO
 
-
+  - Criar função de fechamento de periodo para representação em candles
+  - Planejar as constraints, precisa ver quais são as relações entre medidas
+  - Plotar abertura e fechamento com cor específica para candle de baixa e de alta
+  - Plotar máxima e mínima
+  

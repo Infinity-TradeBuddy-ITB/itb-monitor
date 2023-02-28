@@ -39,11 +39,11 @@ class TimeAxis extends Axis {
   }
 
   public get clipBase() {
-    return (this.max - this.clipWidth) + this.clipRight;
+    return (this.max - this.clipWidth) + this.clipRight * (1 + this.zoom);
   }
 
   public get clipMax() {
-    return this.max + this.clipRight;
+    return this.max + this.clipRight * (1 + this.zoom);
   }
 }
 
@@ -133,7 +133,7 @@ class Scales {
 
   public drawAxies(ctx: CanvasRenderingContext2D) {
     const {x, y} = this._constraints;
-    ctx.fillStyle = 'rgba(63, 63, 63, 1)';
+    ctx.strokeStyle = 'rgba(61, 93, 186, 1)';
     // Draw x axis
     ctx.beginPath();
     ctx.moveTo(x.x1, x.y1);
@@ -147,7 +147,8 @@ class Scales {
   }
 
   public drawMeasures(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = 'rgba(63, 63, 63, 1)';
+    ctx.strokeStyle = 'rgba(61, 93, 186, 1)';
+    ctx.fillStyle = 'rgba(61, 93, 186, 1)';
 
     this._drawXMeasures(ctx);
     this._drawYMeasures(ctx);

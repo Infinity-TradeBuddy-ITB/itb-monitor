@@ -25,7 +25,8 @@
         "@typescript-eslint/consistent-type-assertions": "off",
         "no-mixed-operators": "off",
         "no-trailing-spaces": "off",
-        "curly": "off"
+        "curly": "off",
+        "@typescript-eslint/class-literal-property-style": "off"
       }
     }
   ],

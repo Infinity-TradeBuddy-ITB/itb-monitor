@@ -2,16 +2,6 @@
 import React, {useEffect, useRef} from 'react';
 import CandleStickChartCore from './CandleStickChartCore';
 
-/* .
-export interface DataType {
-  time: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-}
-*/
-
 export interface Fluctuation {
   time: number;
   value: number;

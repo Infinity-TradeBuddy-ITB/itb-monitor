@@ -1,4 +1,7 @@
+import CandlePlot from './CandlePlot';
 import {type Fluctuation} from './CandleStickChart';
+import LinePlot from './LinePlot';
+import {type IPlottable} from './Plot';
 import Scales from './Scales';
 
 class CandleStickChartCore {
@@ -6,6 +9,7 @@ class CandleStickChartCore {
   private readonly _ctx: CanvasRenderingContext2D;
   private readonly _scales: Scales;
   private readonly _data: Fluctuation[];
+  private readonly _plots: IPlottable[];
   private readonly _constraints = {
     margin: 16,
     timeClip: {
@@ -13,13 +17,14 @@ class CandleStickChartCore {
       t2: 0,
     },
     shouldStop: false,
-    shouldUpdate: false,
+    shouldUpdate: true,
     shouldRender: false,
   };
 
   constructor(canvas: HTMLCanvasElement, data: Fluctuation[]) {
     this._canvas = canvas;
     this._data = data;
+    this._plots = [new LinePlot(this), new CandlePlot(this)];
 
     this.fromBottom = this.fromBottom.bind(this);
     this.fromRight = this.fromRight.bind(this);
@@ -65,6 +70,10 @@ class CandleStickChartCore {
     return this._data;
   }
 
+  public getScales() {
+    return this._scales;
+  }
+
   public updateTimeClip() {
     const {x} = this._scales.getConstraints();
     const {timeClip} = this._constraints;
@@ -89,6 +98,7 @@ class CandleStickChartCore {
     if (!this._constraints.shouldUpdate) return;
     this._scales.update();
     this.updateTimeClip();
+    this._plots.forEach(p => p.update());
     this._constraints.shouldUpdate = false;
     this._constraints.shouldRender = true;
   }
@@ -108,6 +118,22 @@ class CandleStickChartCore {
     this.render();
     if (this._constraints.shouldStop) return;
     requestAnimationFrame(this._loop);
+  }
+
+  private _plot(ctx: CanvasRenderingContext2D) {
+    const {margin} = this._constraints;
+    const {x, y, size} = this._scales.getConstraints();
+    const data = this._data;
+
+    if (data.length < 1) return;
+
+    ctx.save();
+    ctx.rect(margin + size.x, margin, x.dx, y.dy);
+    ctx.clip();
+
+    this._plots.forEach(p => p.render(ctx));
+
+    ctx.restore();
   }
 
   private _binarySearch(time: number): number {
@@ -132,36 +158,10 @@ class CandleStickChartCore {
 
     return pivot;
   }
-
-  private _plot(ctx: CanvasRenderingContext2D) {
-    const {margin} = this._constraints;
-    const {getPixelForPrice, getPixelForDate} = this._scales;
-    const {x, y, size} = this._scales.getConstraints();
-    const {t1, t2} = this._constraints.timeClip;
-    const data = this._data;
-
-    if (data.length < 1) return;
-
-    ctx.save();
-    ctx.rect(margin + size.x, margin, x.dx, y.dy);
-    ctx.clip();
-
-    ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
-    ctx.beginPath();
-    ctx.moveTo(getPixelForDate(data[t1].time), getPixelForPrice(data[t1].value));
-
-    for (let i = t1 + 1; i <= t2; i++) {
-      const d = data[i];
-      ctx.lineTo(getPixelForDate(d.time), getPixelForPrice(d.value));
-    }
-
-    ctx.stroke();
-    ctx.restore();
-  }
   
   private _drawBackground(ctx: CanvasRenderingContext2D) {
     // Draw background
-    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+    ctx.fillStyle = 'rgba(0, 4, 15, 1)';
     ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
   }
 }
