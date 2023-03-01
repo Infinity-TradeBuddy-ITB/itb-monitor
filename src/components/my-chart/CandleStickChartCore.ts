@@ -19,6 +19,7 @@ class CandleStickChartCore {
     shouldStop: false,
     shouldUpdate: true,
     shouldRender: false,
+    backgroundColor: 'rgba(0, 4, 15, 1)',
   };
 
   constructor(canvas: HTMLCanvasElement, data: Fluctuation[]) {
@@ -108,8 +109,9 @@ class CandleStickChartCore {
     const ctx = this._ctx;
     this._drawBackground(ctx);
     this._scales.drawAxies(ctx);
-    this._scales.drawMeasures(ctx);
+    this._scales.drawXMeasures(ctx);
     this._plot(ctx);
+    this._scales.drawYMeasures(ctx);
     this._constraints.shouldRender = false;
   }
 
@@ -161,7 +163,7 @@ class CandleStickChartCore {
   
   private _drawBackground(ctx: CanvasRenderingContext2D) {
     // Draw background
-    ctx.fillStyle = 'rgba(0, 4, 15, 1)';
+    ctx.fillStyle = this._constraints.backgroundColor;
     ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
   }
 }

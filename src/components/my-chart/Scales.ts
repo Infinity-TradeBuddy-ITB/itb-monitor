@@ -11,6 +11,7 @@ class Axis {
 class TimeAxis extends Axis {
   public max = 0;
   public min = 0;
+  public period = 60000;
   public zoom = 0;
   public clipRight = 0;
   public locale = {
@@ -58,7 +59,7 @@ class PriceAxis extends Axis {
 class Scales {
   private readonly _constraints = {
     size: {
-      x: 64,
+      x: 0,
       y: 32,
     },
     x: new TimeAxis(),
@@ -139,39 +140,33 @@ class Scales {
     ctx.moveTo(x.x1, x.y1);
     ctx.lineTo(x.x2, x.y2);
     ctx.stroke();
-    // Draw y axis
-    ctx.beginPath();
-    ctx.moveTo(y.x1, y.y1);
-    ctx.lineTo(y.x2, y.y2);
-    ctx.stroke();
   }
 
-  public drawMeasures(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = 'rgba(61, 93, 186, 1)';
-    ctx.fillStyle = 'rgba(61, 93, 186, 1)';
-
-    this._drawXMeasures(ctx);
-    this._drawYMeasures(ctx);
-  }
-
-  private _drawXMeasures(ctx: CanvasRenderingContext2D) {
+  public drawXMeasures(ctx: CanvasRenderingContext2D) {
     const {margin} = this._core.getConstraints();
-    const {x, size} = this._constraints;
+    const {x, y, size} = this._constraints;
 
-    const xPositionUnit = x.dx * x.interval;
-    const xValueUnit = x.dt * x.interval;
+    const begin = this._getPeriodInTime(x.clipBase);
+    const end = this._getPeriodInTime(x.clipMax);
 
-    for (
-      let xPosition = xPositionUnit, xValue = xValueUnit; 
-      xPosition < x.dx; 
-      xPosition += xPositionUnit,
-      xValue += xValueUnit
-    ) {
-      this._drawXMark(ctx, margin + size.x + xPosition, x.clipBase + xValue);
+    ctx.save();
+    ctx.rect(x.x1, y.y2, x.x2 - x.x1, margin + size.y + y.y1 - y.y2);
+    ctx.clip();
+
+    ctx.setLineDash([5, 3]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(133, 177, 255, 0.15)';
+    ctx.fillStyle = 'rgba(61, 93, 186, 1)';
+    ctx.textAlign = 'center';
+
+    for (let t = begin; t <= end; t += x.period) {
+      this._drawXMark(ctx, t);
     }
+
+    ctx.restore();
   }
 
-  private _drawYMeasures(ctx: CanvasRenderingContext2D) {
+  public drawYMeasures(ctx: CanvasRenderingContext2D) {
     const {fromBottom} = this._core;
     const {margin} = this._core.getConstraints();
     const {y, size} = this._constraints;
@@ -179,6 +174,13 @@ class Scales {
     const amount = this._calculateAmountRange();
     const yPositionUnit = y.dy * y.interval;
     const yValueUnit = amount * y.interval;
+
+    ctx.save();
+
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0)';
+    ctx.fillStyle = 'rgba(61, 93, 186, 1)';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
 
     for (
       let yPosition = yPositionUnit, yValue = yValueUnit; 
@@ -188,25 +190,29 @@ class Scales {
     ) {
       this._drawYMark(ctx, fromBottom(margin + size.y + yPosition), yValue);
     }
+
+    ctx.restore();
   }
 
-  private _drawXMark(ctx: CanvasRenderingContext2D, x: number, v: number) {
+  private _drawXMark(ctx: CanvasRenderingContext2D, v: number) {
     const {fromBottom} = this._core;
-    const {x: xAxis} = this._constraints;
+    const {margin} = this._core.getConstraints();
+    const {x, y} = this._constraints;
+    const p = this.getPixelForDate(v);
+    const markX = this.getPixelForDate(v + x.period / 2);
+    const text = new Date(v).toLocaleString(x.locale.locale, x.locale.config);
     ctx.beginPath();
-    ctx.moveTo(x, xAxis.y1);
-    ctx.lineTo(x, xAxis.y1 + 8);
+    ctx.moveTo(markX, y.y2);
+    ctx.lineTo(markX, fromBottom(margin));
     ctx.stroke();
-    ctx.fillText(new Date(v).toLocaleString(xAxis.locale.locale, xAxis.locale.config), x, fromBottom(8));
+    ctx.fillText(text, p, x.y1 + 32);
   }
 
   private _drawYMark(ctx: CanvasRenderingContext2D, y: number, v: number) {
-    const {y: yAxis} = this._constraints;
-    ctx.beginPath();
-    ctx.moveTo(yAxis.x1, y);
-    ctx.lineTo(yAxis.x1 - 8, y);
-    ctx.stroke();
-    ctx.fillText(String(v.toFixed(2)), 8, y);
+    const {fromRight} = this._core;
+    const {margin} = this._core.getConstraints();
+
+    ctx.fillText(v.toFixed(4), fromRight(margin * 2), y);
   }
 
   private _findHigherValues() {
@@ -224,6 +230,20 @@ class Scales {
     const {y} = this._constraints;
     const amount = y.higher || 2200;
     return amount + amount * y.interval * 2;
+  }
+
+  private _getBeginTime(period = this._constraints.x.period) {
+    const {min} = this._constraints.x;
+    const fix = min % period;
+    return min - period + fix;
+  }
+
+  private _periodCount(t: number, period = this._constraints.x.period) {
+    return Math.floor((t - this._getBeginTime(period)) / period);
+  }
+
+  private _getPeriodInTime(t: number, period = this._constraints.x.period) {
+    return this._getBeginTime(period) + this._periodCount(t, period) * period;
   }
 
   private _onZoom(e: WheelEvent) {
