@@ -1,8 +1,9 @@
-import CandlePlot from './CandlePlot';
 import {type Fluctuation} from './CandleStickChart';
-import LinePlot from './LinePlot';
-import {type IPlottable} from './Plot';
+import {type IPlottable} from './plots/Plot';
 import Scales from './Scales';
+import MovingAveragePlot from './plots/MovingAveragePlot';
+import CandlePlot from './plots/CandlePlot';
+import LinePlot from './plots/LinePlot';
 
 class CandleStickChartCore {
   private readonly _canvas: HTMLCanvasElement;
@@ -25,7 +26,7 @@ class CandleStickChartCore {
   constructor(canvas: HTMLCanvasElement, data: Fluctuation[]) {
     this._canvas = canvas;
     this._data = data;
-    this._plots = [new LinePlot(this), new CandlePlot(this)];
+    this._plots = [new LinePlot(this), new CandlePlot(this), new MovingAveragePlot(this)];
 
     this.fromBottom = this.fromBottom.bind(this);
     this.fromRight = this.fromRight.bind(this);
@@ -80,15 +81,38 @@ class CandleStickChartCore {
     const {timeClip} = this._constraints;
     const data = this._data;
 
-    timeClip.t1 = this._binarySearch(x.clipBase);
+    timeClip.t1 = this.binarySearch(x.clipBase);
     if (timeClip.t1 > 0 && data[timeClip.t1].time > x.clipBase) {
       timeClip.t1--;
     }
 
-    timeClip.t2 = this._binarySearch(x.clipMax);
+    timeClip.t2 = this.binarySearch(x.clipMax);
     if (timeClip.t2 < (data.length - 1) && data[timeClip.t2].time < (x.clipMax)) {
       timeClip.t2++;
     }
+  }
+
+  public binarySearch(time: number): number {
+    const {floor} = Math;
+    const data = this._data;
+
+    let min = 0;
+    let max = data.length - 1;
+    let pivot = floor(max / 2);
+    while (pivot !== min && pivot !== max) {
+      const t = data[pivot].time;
+      if (time > t) {
+        min = pivot;
+        pivot += floor((max - pivot) / 2);
+      } else if (time < t) {
+        max = pivot;
+        pivot -= floor((pivot - min) / 2);
+      } else if (t === time) {
+        break;
+      }
+    }
+
+    return pivot;
   }
 
   public destroy() {
@@ -136,29 +160,6 @@ class CandleStickChartCore {
     this._plots.forEach(p => p.render(ctx));
 
     ctx.restore();
-  }
-
-  private _binarySearch(time: number): number {
-    const {floor} = Math;
-    const data = this._data;
-
-    let min = 0;
-    let max = data.length - 1;
-    let pivot = floor(max / 2);
-    while (pivot !== min && pivot !== max) {
-      const t = data[pivot].time;
-      if (time > t) {
-        min = pivot;
-        pivot += floor((max - pivot) / 2);
-      } else if (time < t) {
-        max = pivot;
-        pivot -= floor((pivot - min) / 2);
-      } else if (t === time) {
-        break;
-      }
-    }
-
-    return pivot;
   }
   
   private _drawBackground(ctx: CanvasRenderingContext2D) {

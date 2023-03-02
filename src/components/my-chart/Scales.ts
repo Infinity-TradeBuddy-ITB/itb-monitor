@@ -75,6 +75,9 @@ class Scales {
     this.getPixelForPrice = this.getPixelForPrice.bind(this);
     this.getPixelForDate = this.getPixelForDate.bind(this);
     this.getConstraints = this.getConstraints.bind(this);
+    this.getBeginTime = this.getBeginTime.bind(this);
+    this.periodCount = this.periodCount.bind(this);
+    this.getPeriodInTime = this.getPeriodInTime.bind(this);
     this._onZoom = this._onZoom.bind(this);
     this._onGrab = this._onGrab.bind(this);
     this._onMove = this._onMove.bind(this);
@@ -132,6 +135,20 @@ class Scales {
     return fromRight(margin + (((x.clipMax - date) * x.dx) / x.clipWidth));
   }
 
+  public getBeginTime(period = this._constraints.x.period) {
+    const {min} = this._constraints.x;
+    const fix = min % period;
+    return min - period + fix;
+  }
+
+  public periodCount(t: number, period = this._constraints.x.period) {
+    return Math.floor((t - this.getBeginTime(period)) / period);
+  }
+
+  public getPeriodInTime(t: number, period = this._constraints.x.period) {
+    return this.getBeginTime(period) + this.periodCount(t, period) * period;
+  }
+
   public drawAxies(ctx: CanvasRenderingContext2D) {
     const {x, y} = this._constraints;
     ctx.strokeStyle = 'rgba(61, 93, 186, 1)';
@@ -146,8 +163,8 @@ class Scales {
     const {margin} = this._core.getConstraints();
     const {x, y, size} = this._constraints;
 
-    const begin = this._getPeriodInTime(x.clipBase);
-    const end = this._getPeriodInTime(x.clipMax);
+    const begin = this.getPeriodInTime(x.clipBase);
+    const end = this.getPeriodInTime(x.clipMax);
 
     ctx.save();
     ctx.rect(x.x1, y.y2, x.x2 - x.x1, margin + size.y + y.y1 - y.y2);
@@ -230,20 +247,6 @@ class Scales {
     const {y} = this._constraints;
     const amount = y.higher || 2200;
     return amount + amount * y.interval * 2;
-  }
-
-  private _getBeginTime(period = this._constraints.x.period) {
-    const {min} = this._constraints.x;
-    const fix = min % period;
-    return min - period + fix;
-  }
-
-  private _periodCount(t: number, period = this._constraints.x.period) {
-    return Math.floor((t - this._getBeginTime(period)) / period);
-  }
-
-  private _getPeriodInTime(t: number, period = this._constraints.x.period) {
-    return this._getBeginTime(period) + this._periodCount(t, period) * period;
   }
 
   private _onZoom(e: WheelEvent) {

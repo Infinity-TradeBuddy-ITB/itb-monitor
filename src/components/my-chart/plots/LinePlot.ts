@@ -1,4 +1,4 @@
-import {type Fluctuation} from './CandleStickChart';
+import {type Fluctuation} from '../CandleStickChart';
 import Plot from './Plot';
 
 class LinePlot extends Plot {

@@ -1,5 +1,5 @@
-import {type Fluctuation} from './CandleStickChart';
-import type CandleStickChartCore from './CandleStickChartCore';
+import {type Fluctuation} from '../CandleStickChart';
+import type CandleStickChartCore from '../CandleStickChartCore';
 
 export interface IPlottable {
   render: (ctx: CanvasRenderingContext2D) => void;
