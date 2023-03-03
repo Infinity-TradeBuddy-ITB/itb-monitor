@@ -1,4 +1,5 @@
 import {type Fluctuation} from '../CandleStickChart';
+import type CandleStickChartCore from '../CandleStickChartCore';
 import Plot from './Plot';
 
 interface MovingAverage {
@@ -10,34 +11,48 @@ class MovingAveragePlot extends Plot<MovingAverage> {
   private _movingAverages: MovingAverage[] = [];
   private readonly _period = 30000;
 
+  constructor(core: CandleStickChartCore) {
+    super(core);
+    this._recalculateAll();
+  }
+
   public update(): void {
-    this._movingAverages = [];
     const {t1, t2} = this.core.getConstraints().timeClip;
     const data = this.core.getData();
     const scales = this.core.getScales();
     const {x} = scales.getConstraints();
     const period = this._period;
+    const ma = this._movingAverages;
 
     if (x.max - x.min < period) return;
 
-    const begin = this._getBegin();
+    if (ma.length === 0) {
+      this._recalculateAll();
+      return;
+    }
 
-    for (let i = begin; i <= t2; i++) {
-      const d = data[i];
-      const ma = {time: d.time, average: d.value};
-      const limit = d.time - period;
-      let n = 1;
-      for (let j = i - 1; j >= 0; j--, n++) {
-        if (data[j].time < limit) {
-          n--;
-          break;
-        }
+    const ma1 = ma[0].time;
+    const ma2 = ma[ma.length - 1].time;
 
-        ma.average += data[j].value;
-      }
+    if (data[t1].time < ma1) {
+      const left = this._calculateInRange(t1 === 0 ? t1 : t1 - 1, ma1);
+      left.pop();
+      this._movingAverages = left.concat(this._movingAverages);
+    } else if (data[t1].time > ma1) {
+      const i = this._movingAverages.findIndex(v => data[t1].time < v.time);
+      this._movingAverages.splice(0, i === -1 ? this._movingAverages.length : i);
+    }
 
-      ma.average /= n;
-      this._movingAverages.push(ma);
+    if (this._movingAverages.length === 0) return;
+
+    if (data[t2].time < ma2) {
+      const i = [...this._movingAverages].reverse().findIndex(v => data[t2].time > v.time);
+      const maxIndex = this._movingAverages.length - 1;
+      this._movingAverages.splice(i === -1 ? 0 : maxIndex - i, i + 1);
+    } else if (data[t2].time > ma2) {
+      const right = this._calculateInReverseRange(ma2, t2);
+      right.splice(0, 1);
+      this._movingAverages = this._movingAverages.concat(right);
     }
   }
 
@@ -63,6 +78,69 @@ class MovingAveragePlot extends Plot<MovingAverage> {
 
   protected _getDataToBeRendered(): MovingAverage[] {
     return this._movingAverages;
+  }
+
+  private _recalculateAll() {
+    const data = this.core.getData();
+    const {t2} = this.core.getConstraints().timeClip;
+    const scales = this.core.getScales();
+    const {x} = scales.getConstraints();
+    const period = this._period;
+
+    if (x.max - x.min < period) return;
+
+    const begin = this._getBegin();
+
+    this._movingAverages = this._calculateInRange(begin, data[t2].time);
+  }
+
+  private _calculateInRange(i1: number, time: number): MovingAverage[] {
+    const data = this.core.getData();
+    const ma: MovingAverage[] = [];
+    let i = i1;
+    while (i < data.length && data[i].time <= time) {
+      ma.push(this._calculateFor(i));
+      i++;
+    }
+
+    return ma;
+  }
+
+  private _calculateInReverseRange(time: number, i2: number): MovingAverage[] {
+    const data = this.core.getData();
+    const ma: MovingAverage[] = [];
+    let i = i2;
+    while (data[i].time >= time) {
+      ma.push(this._calculateFor(i));
+      i--;
+    }
+
+    return ma.reverse();
+  }
+
+  private _calculateFor(i: number): MovingAverage {
+    const data = this.core.getData();
+    const period = this._period;
+
+    if (!(i >= 0 && i < data.length)) {
+      throw new Error('Index out of range!');
+    }
+
+    const d = data[i];
+    const ma = {time: d.time, average: d.value};
+    const limit = d.time - period;
+    let n = 1;
+    for (let j = i - 1; j >= 0; j--, n++) {
+      if (data[j].time < limit) {
+        n--;
+        break;
+      }
+
+      ma.average += data[j].value;
+    }
+
+    ma.average /= n;
+    return ma;
   }
 
   private _getBegin() {

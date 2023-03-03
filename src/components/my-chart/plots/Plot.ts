@@ -21,7 +21,13 @@ abstract class Plot<T = Fluctuation> implements IPlottable {
     this._getDataToBeRendered().forEach((d, i) => this._drawData(ctx, d, i));
   }
 
-  public abstract update(): void;
+  public update(): void {
+    // Should overridden in specialized classes if necessary
+  }
+
+  public whenDataPushed(data: T): void {
+    // Should overridden in specialized classes if necessary
+  }
 
   protected abstract _drawData(ctx: CanvasRenderingContext2D, data: T, i: number): void;
 

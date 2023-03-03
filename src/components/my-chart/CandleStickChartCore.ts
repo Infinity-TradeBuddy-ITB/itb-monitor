@@ -26,7 +26,6 @@ class CandleStickChartCore {
   constructor(canvas: HTMLCanvasElement, data: Fluctuation[]) {
     this._canvas = canvas;
     this._data = data;
-    this._plots = [new LinePlot(this), new CandlePlot(this), new MovingAveragePlot(this)];
 
     this.fromBottom = this.fromBottom.bind(this);
     this.fromRight = this.fromRight.bind(this);
@@ -38,6 +37,8 @@ class CandleStickChartCore {
 
     this._scales = new Scales(this);
     this.updateTimeClip();
+
+    this._plots = [new LinePlot(this), new CandlePlot(this), new MovingAveragePlot(this)];
 
     canvas.width = window.innerWidth - 16;
     canvas.height = window.innerHeight - 16;
