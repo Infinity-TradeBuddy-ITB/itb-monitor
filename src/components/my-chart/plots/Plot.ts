@@ -1,12 +1,12 @@
-import {type Fluctuation} from '../CandleStickChart';
 import type CandleStickChartCore from '../CandleStickChartCore';
+import type FluctuationUtils from './utils/FluctuationUtils';
 
 export interface IPlottable {
   render: (ctx: CanvasRenderingContext2D) => void;
   update: () => void;
 }
 
-abstract class Plot<T = Fluctuation> implements IPlottable {
+abstract class Plot<T = FluctuationUtils> implements IPlottable {
   private readonly _core: CandleStickChartCore;
   
   constructor(core: CandleStickChartCore) {

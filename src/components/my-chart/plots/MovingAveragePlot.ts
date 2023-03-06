@@ -1,6 +1,6 @@
-import {type Fluctuation} from '../CandleStickChart';
 import type CandleStickChartCore from '../CandleStickChartCore';
 import Plot from './Plot';
+import FluctuationUtils from './utils/FluctuationUtils';
 
 interface MovingAverage {
   time: number;
@@ -9,51 +9,41 @@ interface MovingAverage {
 
 class MovingAveragePlot extends Plot<MovingAverage> {
   private _movingAverages: MovingAverage[] = [];
-  private readonly _period = 30000;
+  private readonly _period = 5;
+  private readonly _utils: FluctuationUtils;
 
   constructor(core: CandleStickChartCore) {
     super(core);
-    this._recalculateAll();
+    this._utils = new FluctuationUtils(core, 20000);
+    this._utils.recalculateCandles();
   }
 
   public update(): void {
-    const {t1, t2} = this.core.getConstraints().timeClip;
-    const data = this.core.getData();
     const scales = this.core.getScales();
     const {x} = scales.getConstraints();
-    const period = this._period;
-    const ma = this._movingAverages;
+    const candlePeriod = this._period;
+    const fluctuationPeriod = this._utils.getPeriod();
 
-    if (x.max - x.min < period) return;
+    if (x.max - x.min < fluctuationPeriod) return;
 
-    if (ma.length === 0) {
-      this._recalculateAll();
-      return;
-    }
+    this._utils.recalculateCandles(candlePeriod);
+    const candles = this._utils.getCandles();
 
-    const ma1 = ma[0].time;
-    const ma2 = ma[ma.length - 1].time;
+    this._movingAverages = [];
 
-    if (data[t1].time < ma1) {
-      const left = this._calculateInRange(t1 === 0 ? t1 : t1 - 1, ma1);
-      left.pop();
-      this._movingAverages = left.concat(this._movingAverages);
-    } else if (data[t1].time > ma1) {
-      const i = this._movingAverages.findIndex(v => data[t1].time < v.time);
-      this._movingAverages.splice(0, i === -1 ? this._movingAverages.length : i);
-    }
+    candles.forEach((c, i) => {
+      if (i < candlePeriod) return;
+      const ma = {time: c.time, average: c.close};
 
-    if (this._movingAverages.length === 0) return;
+      for (let j = 1; j < candlePeriod; j++) {
+        ma.average += candles[i - j].close;
+      }
 
-    if (data[t2].time < ma2) {
-      const i = [...this._movingAverages].reverse().findIndex(v => data[t2].time > v.time);
-      const maxIndex = this._movingAverages.length - 1;
-      this._movingAverages.splice(i === -1 ? 0 : maxIndex - i, i + 1);
-    } else if (data[t2].time > ma2) {
-      const right = this._calculateInReverseRange(ma2, t2);
-      right.splice(0, 1);
-      this._movingAverages = this._movingAverages.concat(right);
-    }
+      ma.average /= candlePeriod;
+      this._movingAverages.push(ma);
+    });
+
+    console.log(this._utils.getCandles().length);
   }
 
   public render(ctx: CanvasRenderingContext2D) {
@@ -78,80 +68,6 @@ class MovingAveragePlot extends Plot<MovingAverage> {
 
   protected _getDataToBeRendered(): MovingAverage[] {
     return this._movingAverages;
-  }
-
-  private _recalculateAll() {
-    const data = this.core.getData();
-    const {t2} = this.core.getConstraints().timeClip;
-    const scales = this.core.getScales();
-    const {x} = scales.getConstraints();
-    const period = this._period;
-
-    if (x.max - x.min < period) return;
-
-    const begin = this._getBegin();
-
-    this._movingAverages = this._calculateInRange(begin, data[t2].time);
-  }
-
-  private _calculateInRange(i1: number, time: number): MovingAverage[] {
-    const data = this.core.getData();
-    const ma: MovingAverage[] = [];
-    let i = i1;
-    while (i < data.length && data[i].time <= time) {
-      ma.push(this._calculateFor(i));
-      i++;
-    }
-
-    return ma;
-  }
-
-  private _calculateInReverseRange(time: number, i2: number): MovingAverage[] {
-    const data = this.core.getData();
-    const ma: MovingAverage[] = [];
-    let i = i2;
-    while (data[i].time >= time) {
-      ma.push(this._calculateFor(i));
-      i--;
-    }
-
-    return ma.reverse();
-  }
-
-  private _calculateFor(i: number): MovingAverage {
-    const data = this.core.getData();
-    const period = this._period;
-
-    if (!(i >= 0 && i < data.length)) {
-      throw new Error('Index out of range!');
-    }
-
-    const d = data[i];
-    const ma = {time: d.time, average: d.value};
-    const limit = d.time - period;
-    let n = 1;
-    for (let j = i - 1; j >= 0; j--, n++) {
-      if (data[j].time < limit) {
-        n--;
-        break;
-      }
-
-      ma.average += data[j].value;
-    }
-
-    ma.average /= n;
-    return ma;
-  }
-
-  private _getBegin() {
-    const {t1} = this.core.getConstraints().timeClip;
-    const data = this.core.getData();
-    const {x} = this.core.getScales().getConstraints();
-    const beginTime = x.min + this._period > data[t1].time
-      ? x.min + this._period
-      : data[t1].time;
-    const index = this.core.binarySearch(beginTime);
-    return data[index].time < beginTime ? index + 1 : index;
   }
 }
 

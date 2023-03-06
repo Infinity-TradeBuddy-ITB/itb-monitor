@@ -1,4 +1,4 @@
-import {type Fluctuation} from './CandleStickChart';
+import {type Fluctuation} from './plots/utils/FluctuationUtils';
 import {type IPlottable} from './plots/Plot';
 import Scales from './Scales';
 import MovingAveragePlot from './plots/MovingAveragePlot';

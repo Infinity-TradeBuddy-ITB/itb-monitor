@@ -1,11 +1,7 @@
 
 import React, {useEffect, useRef} from 'react';
 import CandleStickChartCore from './CandleStickChartCore';
-
-export interface Fluctuation {
-  time: number;
-  value: number;
-}
+import {type Fluctuation} from './plots/utils/FluctuationUtils';
 
 interface CandleStickChartProps {
   data: Fluctuation[];
