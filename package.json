@@ -2,6 +2,7 @@
   "name": "proof-of-concept",
   "private": true,
   "version": "0.0.0",
+  "license": "see license in LICENSE",
   "type": "module",
   "scripts": {
     "dev": "vite",
