@@ -1,11 +1,11 @@
-import type CandleStickChartCore from '../CandleStickChartCore';
+import type ChartCore from '../ChartCore';
 import Plot from './Plot';
 import FluctuationUtils, {type PeriodFluctuation} from './utils/FluctuationUtils';
 
 class CandlePlot extends Plot<PeriodFluctuation> {
   private readonly _utils: FluctuationUtils;
 
-  constructor(core: CandleStickChartCore) {
+  constructor(core: ChartCore) {
     super(core);
     this._utils = new FluctuationUtils(core, 20000);
     this._utils.recalculateCandles();

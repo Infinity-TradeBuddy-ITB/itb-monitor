@@ -1,4 +1,4 @@
-import type CandleStickChartCore from '../../CandleStickChartCore';
+import type ChartCore from '../../ChartCore';
 
 export interface Fluctuation {
   time: number;
@@ -14,11 +14,11 @@ export interface PeriodFluctuation {
 }
 
 class FluctuationUtils {
-  private readonly _core: CandleStickChartCore;
+  private readonly _core: ChartCore;
   private _candles: PeriodFluctuation[];
   private _period: number;
 
-  constructor(core: CandleStickChartCore, period: number) {
+  constructor(core: ChartCore, period: number) {
     this._core = core;
     this._candles = [];
     this._period = period;

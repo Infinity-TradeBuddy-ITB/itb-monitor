@@ -17,7 +17,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@worker/*": ["./src/worker/*"]
+      "@components/*": ["./src/component/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@connection/*": ["./src/connection/*"]
     }
   },
   "include": [

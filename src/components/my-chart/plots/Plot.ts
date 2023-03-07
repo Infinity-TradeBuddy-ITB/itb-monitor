@@ -1,4 +1,4 @@
-import type CandleStickChartCore from '../CandleStickChartCore';
+import type ChartCore from '../ChartCore';
 import type FluctuationUtils from './utils/FluctuationUtils';
 
 export interface IPlottable {
@@ -7,9 +7,9 @@ export interface IPlottable {
 }
 
 abstract class Plot<T = FluctuationUtils> implements IPlottable {
-  private readonly _core: CandleStickChartCore;
+  private readonly _core: ChartCore;
   
-  constructor(core: CandleStickChartCore) {
+  constructor(core: ChartCore) {
     this._core = core;
   }
 

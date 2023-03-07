@@ -1,11 +1,11 @@
 import React, {useEffect, useRef} from 'react';
 // .import CandleStickChart from './components/chartjs-chart/CandleStickChart';
-import CandleStickChart from './components/my-chart/CandleStickChart';
-import type CandleStickChartCore from './components/my-chart/CandleStickChartCore';
+import Chart from './components/my-chart/Chart';
+import type ChartCore from './components/my-chart/ChartCore';
 import fluctuations from './components/my-chart/mockdata';
 
 const RealtimeFeeding: React.FC = () => {
-  const chartRef = useRef<CandleStickChartCore>();
+  const chartRef = useRef<ChartCore>();
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -17,10 +17,10 @@ const RealtimeFeeding: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  return <CandleStickChart innerRef={chartRef} data={[]} />;
+  return <Chart innerRef={chartRef} data={[]} />;
 };
 
-const StaticFeeding: React.FC = () => <CandleStickChart data={fluctuations} />;
+const StaticFeeding: React.FC = () => <Chart data={fluctuations} />;
 
 const App: React.FC = () => <RealtimeFeeding />;
 

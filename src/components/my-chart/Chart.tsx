@@ -1,19 +1,19 @@
 
 import React, {useEffect, useRef} from 'react';
-import CandleStickChartCore from './CandleStickChartCore';
+import ChartCore from './ChartCore';
 import {type Fluctuation} from './plots/utils/FluctuationUtils';
 
-interface CandleStickChartProps {
+interface ChartProps {
   data: Fluctuation[];
-  innerRef?: React.MutableRefObject<CandleStickChartCore | undefined>;
+  innerRef?: React.MutableRefObject<ChartCore | undefined>;
 }
 
-const CandleStickChart: React.FC<CandleStickChartProps> = props => {
+const Chart: React.FC<ChartProps> = props => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const core = useRef<CandleStickChartCore>();
+  const core = useRef<ChartCore>();
   useEffect(() => {
     if (!canvasRef.current) return;
-    core.current = new CandleStickChartCore(canvasRef.current, props.data);
+    core.current = new ChartCore(canvasRef.current, props.data);
     if (props.innerRef) {
       props.innerRef.current = core.current;
     }
@@ -23,4 +23,4 @@ const CandleStickChart: React.FC<CandleStickChartProps> = props => {
   return <canvas ref={canvasRef}></canvas>;
 };
 
-export default CandleStickChart;
+export default Chart;

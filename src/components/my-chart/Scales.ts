@@ -1,4 +1,4 @@
-import type CandleStickChartCore from './CandleStickChartCore';
+import type ChartCore from './ChartCore';
 
 class Axis {
   public x1 = 0;
@@ -67,9 +67,9 @@ class Scales {
     grabbing: false,
   };
 
-  private readonly _core: CandleStickChartCore;
+  private readonly _core: ChartCore;
 
-  constructor(core: CandleStickChartCore) {
+  constructor(core: ChartCore) {
     this._core = core;
     this.update();
     this.getPixelForPrice = this.getPixelForPrice.bind(this);

@@ -5,7 +5,7 @@ import MovingAveragePlot from './plots/MovingAveragePlot';
 import CandlePlot from './plots/CandlePlot';
 import LinePlot from './plots/LinePlot';
 
-class CandleStickChartCore {
+class ChartCore {
   private readonly _canvas: HTMLCanvasElement;
   private readonly _ctx: CanvasRenderingContext2D;
   private readonly _scales: Scales;
@@ -38,7 +38,8 @@ class CandleStickChartCore {
     this._scales = new Scales(this);
     this.updateTimeClip();
 
-    this._plots = [new LinePlot(this), new CandlePlot(this), new MovingAveragePlot(this)];
+    // . this._plots = [new LinePlot(this), new CandlePlot(this), new MovingAveragePlot(this)];
+    this._plots = [];
 
     canvas.width = window.innerWidth - 16;
     canvas.height = window.innerHeight - 16;
@@ -46,6 +47,11 @@ class CandleStickChartCore {
     if (!ctx) throw new Error('Canvas context not initialized!');
     this._ctx = ctx;
     this._loop();
+  }
+
+  public setPlots(plots: IPlottable[]) {
+    plots.forEach(p => this._plots.push(p));
+    this._constraints.shouldUpdate = true;
   }
 
   public push(data: Fluctuation) {
@@ -170,4 +176,4 @@ class CandleStickChartCore {
   }
 }
 
-export default CandleStickChartCore;
+export default ChartCore;
