@@ -22,7 +22,7 @@ export default defineConfig({
       '@test': path.resolve(__dirname, './src/test'),
 			'@connection': path.resolve(__dirname, './src/internals'),
       '@custom-types': path.resolve(__dirname, './src/custom-types'),
-      '@style': path.resolve(__dirname, './src/style'),
+      '@styles': path.resolve(__dirname, './src/styles'),
       '@store': path.resolve(__dirname, './src/store'),
 		},
 	},

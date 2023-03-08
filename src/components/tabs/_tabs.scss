@@ -1,0 +1,50 @@
+
+.tabs {
+  width: 100%;
+
+  .buttons {
+    width: inherit;
+    background-color: #111;
+    display: flex;
+    align-items: center;
+
+    @mixin commonButtonStyle() {
+      padding: .5rem;
+      background-color: #222;
+      border: none;
+      color: white;
+      outline: none;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #2228;
+      }
+    }
+
+    > .inner {
+      width: auto;
+      overflow: hidden;
+
+      > button {
+        @include commonButtonStyle();
+        min-width: 4rem;
+        
+        &.active {
+          border-bottom: 1px solid yellow;
+        }
+      }
+    }
+
+    > button {
+      @include commonButtonStyle();
+      width: 1.8rem;
+      height: 1.8rem;
+      border-radius: 4px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-left: auto;
+      margin-right: .25rem;
+    }
+  }
+}
