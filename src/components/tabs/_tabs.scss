@@ -2,7 +2,7 @@
 .tabs {
   width: 100%;
 
-  .buttons {
+  > .buttons {
     width: inherit;
     background-color: #111;
     display: flex;
@@ -11,10 +11,7 @@
     @mixin commonButtonStyle() {
       padding: .5rem;
       background-color: #222;
-      border: none;
       color: white;
-      outline: none;
-      cursor: pointer;
 
       &:hover {
         background-color: #2228;
@@ -25,13 +22,26 @@
       width: auto;
       overflow: hidden;
 
-      > button {
+      > div {
         @include commonButtonStyle();
+        user-select: none;
+        cursor: pointer;
         min-width: 4rem;
+        font-size: .8rem;
         
         &.active {
           border-bottom: 1px solid yellow;
         }
+
+        > button {
+          padding-left: .5rem;
+        }
+      }
+
+      > div, button {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
       }
     }
 
@@ -45,6 +55,14 @@
       align-items: center;
       margin-left: auto;
       margin-right: .25rem;
+    }
+  }
+
+  > .screen > div {
+    display: none;
+
+    &.active {
+      display: block;
     }
   }
 }

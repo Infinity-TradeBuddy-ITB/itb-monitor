@@ -1,0 +1,20 @@
+
+.stock-modal {
+  > div > .ui-box {
+    width: 30rem;
+    flex-wrap: wrap;
+
+    > div {
+      flex: auto;
+    }
+
+    > .header {
+      width: 100%;
+      margin-bottom: 1rem;
+
+      > .ui-button {
+        margin-left: auto;
+      }
+    }
+  }
+}

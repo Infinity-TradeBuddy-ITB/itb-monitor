@@ -5,14 +5,27 @@ import FluctuationUtils, {type PeriodFluctuation} from './utils/FluctuationUtils
 class CandlePlot extends Plot<PeriodFluctuation> {
   private readonly _utils: FluctuationUtils;
 
-  constructor(core: ChartCore) {
-    super(core);
+  constructor(core: ChartCore, active: boolean) {
+    super(core, active);
     this._utils = new FluctuationUtils(core, 20000);
     this._utils.recalculateCandles();
   }
 
   public update(): void {
     this._utils.recalculateCandles();
+  }
+
+  public render(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+
+    ctx.lineWidth = 1;
+    ctx.shadowColor = 'rgba(0, 0, 0, 1)';
+    ctx.shadowOffsetY = 2;
+    ctx.shadowBlur = 4;
+
+    super.render(ctx);
+
+    ctx.restore();
   }
 
   protected _drawData(ctx: CanvasRenderingContext2D, data: PeriodFluctuation, i: number): void {
@@ -27,7 +40,8 @@ class CandlePlot extends Plot<PeriodFluctuation> {
     const l = getPixelForPrice(data.low);
     const t = (t1 + t2) / 2;
 
-    ctx.lineWidth = 1;
+    ctx.shadowOffsetY = 2;
+    ctx.shadowBlur = 4;
 
     if (data.open > data.close) {
       ctx.strokeStyle = 'rgba(224, 65, 65, 1)';
@@ -44,6 +58,9 @@ class CandlePlot extends Plot<PeriodFluctuation> {
       ctx.lineTo(t2, o);
       ctx.stroke();
     }
+
+    ctx.shadowOffsetY = 0;
+    ctx.shadowBlur = 0;
 
     ctx.beginPath();
     ctx.moveTo(t, h);

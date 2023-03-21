@@ -12,8 +12,8 @@ class MovingAveragePlot extends Plot<MovingAverage> {
   private readonly _period = 5;
   private readonly _utils: FluctuationUtils;
 
-  constructor(core: ChartCore) {
-    super(core);
+  constructor(core: ChartCore, active: boolean) {
+    super(core, active);
     this._utils = new FluctuationUtils(core, 20000);
     this._utils.recalculateCandles();
   }
@@ -42,8 +42,6 @@ class MovingAveragePlot extends Plot<MovingAverage> {
       ma.average /= candlePeriod;
       this._movingAverages.push(ma);
     });
-
-    console.log(this._utils.getCandles().length);
   }
 
   public render(ctx: CanvasRenderingContext2D) {

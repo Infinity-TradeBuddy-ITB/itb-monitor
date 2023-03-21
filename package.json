@@ -12,6 +12,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "aquino": "^0.1.6",
     "itb-types": "github:Infinity-TradeBuddy-ITB/itb-types#master",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

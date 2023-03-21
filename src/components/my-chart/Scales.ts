@@ -11,8 +11,8 @@ class Axis {
 class TimeAxis extends Axis {
   public max = 0;
   public min = 0;
-  public period = 60000;
-  public zoom = 0;
+  public period = 120000;
+  public zoom = 20;
   public clipRight = 0;
   public locale = {
     locale: 'en',

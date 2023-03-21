@@ -5,35 +5,12 @@ import type ChartCore from '@components/my-chart/ChartCore';
 import fluctuations from '@components/my-chart/mockdata';
 import Tabs from '@components/tabs/Tabs';
 
-const RealtimeFeeding: React.FC = () => {
-  const chartRef = useRef<ChartCore>();
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-    let i = 0;
-    const interval = setInterval(() => {
-      // . console.log('push test:', i);
-      chartRef.current?.push(fluctuations[i++]);
-    }, 200);
-    return () => clearInterval(interval);
-  }, []);
-
-  return <Chart innerRef={chartRef} data={[]} />;
-};
-
-const StaticFeeding: React.FC = () => <Chart data={fluctuations} />;
+import Aquino from 'aquino';
 
 const App: React.FC = () => (
-  <GlobalContext>
-    <Tabs 
-      tabs={[
-        {name: 'a', tab: <> something a</>},
-        {name: 'b', tab: <> something b</>},
-        {name: 'c', tab: <> something c</>},
-        {name: 'd', tab: <> something d</>},
-      ]}
-    />
-  </GlobalContext>
+  <Aquino>
+    <Tabs />
+  </Aquino>
 );
 
 export default App;

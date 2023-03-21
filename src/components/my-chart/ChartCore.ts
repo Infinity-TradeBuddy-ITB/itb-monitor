@@ -10,7 +10,6 @@ class ChartCore {
   private readonly _ctx: CanvasRenderingContext2D;
   private readonly _scales: Scales;
   private readonly _data: Fluctuation[];
-  private readonly _plots: IPlottable[];
   private readonly _constraints = {
     margin: 16,
     timeClip: {
@@ -23,7 +22,18 @@ class ChartCore {
     backgroundColor: 'rgba(0, 4, 15, 1)',
   };
 
-  constructor(canvas: HTMLCanvasElement, data: Fluctuation[]) {
+  private readonly _linePlot: LinePlot;
+  private readonly _candlePlot: CandlePlot;
+  private readonly _movingAverage: MovingAveragePlot;
+
+  // eslint-disable-next-line max-params
+  constructor(
+    canvas: HTMLCanvasElement, 
+    data: Fluctuation[],
+    activeLinePlot: boolean,
+    activeCandlePlot: boolean,
+    activeMovingAveragePlot: boolean,
+  ) {
     this._canvas = canvas;
     this._data = data;
 
@@ -38,20 +48,28 @@ class ChartCore {
     this._scales = new Scales(this);
     this.updateTimeClip();
 
-    // . this._plots = [new LinePlot(this), new CandlePlot(this), new MovingAveragePlot(this)];
-    this._plots = [];
-
-    canvas.width = window.innerWidth - 16;
-    canvas.height = window.innerHeight - 16;
+    this._linePlot = new LinePlot(this, activeLinePlot);
+    this._candlePlot = new CandlePlot(this, activeCandlePlot);
+    this._movingAverage = new MovingAveragePlot(this, activeMovingAveragePlot);
+    
+    // . canvas.width = window.innerWidth - 16;
+    // canvas.height = window.innerHeight - 16;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas context not initialized!');
     this._ctx = ctx;
     this._loop();
   }
 
-  public setPlots(plots: IPlottable[]) {
-    plots.forEach(p => this._plots.push(p));
-    this._constraints.shouldUpdate = true;
+  public getLinePlot() {
+    return this._linePlot;
+  }
+
+  public getCandlePlot() {
+    return this._candlePlot;
+  }
+
+  public getMovingAveragePlot() {
+    return this._movingAverage;
   }
 
   public push(data: Fluctuation) {
@@ -130,7 +148,16 @@ class ChartCore {
     if (!this._constraints.shouldUpdate) return;
     this._scales.update();
     this.updateTimeClip();
-    this._plots.forEach(p => p.update());
+
+    if (this._linePlot.isActive())
+      this._linePlot.update();
+
+    if (this._candlePlot.isActive())
+      this._candlePlot.update();
+
+    if (this._movingAverage.isActive())
+      this._movingAverage.update();
+
     this._constraints.shouldUpdate = false;
     this._constraints.shouldRender = true;
   }
@@ -164,7 +191,14 @@ class ChartCore {
     ctx.rect(margin + size.x, margin, x.dx, y.dy);
     ctx.clip();
 
-    this._plots.forEach(p => p.render(ctx));
+    if (this._linePlot.isActive())
+      this._linePlot.render(ctx);
+
+    if (this._candlePlot.isActive())
+      this._candlePlot.render(ctx);
+
+    if (this._movingAverage.isActive())
+      this._movingAverage.render(ctx);
 
     ctx.restore();
   }
