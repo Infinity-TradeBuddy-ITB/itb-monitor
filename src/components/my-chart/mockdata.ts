@@ -1,7 +1,7 @@
 /* eslint-disable max-params */
 /* eslint-disable no-bitwise */
 
-import {type Fluctuation} from './CandleStickChart';
+import {type Fluctuation} from './Chart';
 
 function mulberry32(a: number) {
   return () => {

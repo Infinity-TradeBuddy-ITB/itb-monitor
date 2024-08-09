@@ -12,13 +12,13 @@
     "test": "vitest"
   },
   "dependencies": {
-    "chart.js": "^4.2.1",
-    "chartjs-adapter-date-fns": "^3.0.0",
-    "chartjs-plugin-zoom": "^2.0.0",
-    "date-fns": "^2.29.3",
+    "aquino": "^0.1.6",
+    "itb-types": "github:Infinity-TradeBuddy-ITB/itb-types#master",
     "react": "^18.2.0",
-    "react-chartjs-2": "^5.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.8.0",
+    "sass": "^1.58.3",
+    "socket.io-client": "^4.6.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",

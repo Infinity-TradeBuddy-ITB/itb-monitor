@@ -1,15 +1,15 @@
-import CandlePlot from './CandlePlot';
-import {type Fluctuation} from './CandleStickChart';
-import LinePlot from './LinePlot';
-import {type IPlottable} from './Plot';
+import {type Fluctuation} from './plots/utils/FluctuationUtils';
+import {type IPlottable} from './plots/Plot';
 import Scales from './Scales';
+import MovingAveragePlot from './plots/MovingAveragePlot';
+import CandlePlot from './plots/CandlePlot';
+import LinePlot from './plots/LinePlot';
 
-class CandleStickChartCore {
+class ChartCore {
   private readonly _canvas: HTMLCanvasElement;
   private readonly _ctx: CanvasRenderingContext2D;
   private readonly _scales: Scales;
   private readonly _data: Fluctuation[];
-  private readonly _plots: IPlottable[];
   private readonly _constraints = {
     margin: 16,
     timeClip: {
@@ -22,10 +22,20 @@ class CandleStickChartCore {
     backgroundColor: 'rgba(0, 4, 15, 1)',
   };
 
-  constructor(canvas: HTMLCanvasElement, data: Fluctuation[]) {
+  private readonly _linePlot: LinePlot;
+  private readonly _candlePlot: CandlePlot;
+  private readonly _movingAverage: MovingAveragePlot;
+
+  // eslint-disable-next-line max-params
+  constructor(
+    canvas: HTMLCanvasElement, 
+    data: Fluctuation[],
+    activeLinePlot: boolean,
+    activeCandlePlot: boolean,
+    activeMovingAveragePlot: boolean,
+  ) {
     this._canvas = canvas;
     this._data = data;
-    this._plots = [new LinePlot(this), new CandlePlot(this)];
 
     this.fromBottom = this.fromBottom.bind(this);
     this.fromRight = this.fromRight.bind(this);
@@ -38,12 +48,28 @@ class CandleStickChartCore {
     this._scales = new Scales(this);
     this.updateTimeClip();
 
-    canvas.width = window.innerWidth - 16;
-    canvas.height = window.innerHeight - 16;
+    this._linePlot = new LinePlot(this, activeLinePlot);
+    this._candlePlot = new CandlePlot(this, activeCandlePlot);
+    this._movingAverage = new MovingAveragePlot(this, activeMovingAveragePlot);
+    
+    // . canvas.width = window.innerWidth - 16;
+    // canvas.height = window.innerHeight - 16;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas context not initialized!');
     this._ctx = ctx;
     this._loop();
+  }
+
+  public getLinePlot() {
+    return this._linePlot;
+  }
+
+  public getCandlePlot() {
+    return this._candlePlot;
+  }
+
+  public getMovingAveragePlot() {
+    return this._movingAverage;
   }
 
   public push(data: Fluctuation) {
@@ -80,15 +106,38 @@ class CandleStickChartCore {
     const {timeClip} = this._constraints;
     const data = this._data;
 
-    timeClip.t1 = this._binarySearch(x.clipBase);
+    timeClip.t1 = this.binarySearch(x.clipBase);
     if (timeClip.t1 > 0 && data[timeClip.t1].time > x.clipBase) {
       timeClip.t1--;
     }
 
-    timeClip.t2 = this._binarySearch(x.clipMax);
+    timeClip.t2 = this.binarySearch(x.clipMax);
     if (timeClip.t2 < (data.length - 1) && data[timeClip.t2].time < (x.clipMax)) {
       timeClip.t2++;
     }
+  }
+
+  public binarySearch(time: number): number {
+    const {floor} = Math;
+    const data = this._data;
+
+    let min = 0;
+    let max = data.length - 1;
+    let pivot = floor(max / 2);
+    while (pivot !== min && pivot !== max) {
+      const t = data[pivot].time;
+      if (time > t) {
+        min = pivot;
+        pivot += floor((max - pivot) / 2);
+      } else if (time < t) {
+        max = pivot;
+        pivot -= floor((pivot - min) / 2);
+      } else if (t === time) {
+        break;
+      }
+    }
+
+    return pivot;
   }
 
   public destroy() {
@@ -99,7 +148,16 @@ class CandleStickChartCore {
     if (!this._constraints.shouldUpdate) return;
     this._scales.update();
     this.updateTimeClip();
-    this._plots.forEach(p => p.update());
+
+    if (this._linePlot.isActive())
+      this._linePlot.update();
+
+    if (this._candlePlot.isActive())
+      this._candlePlot.update();
+
+    if (this._movingAverage.isActive())
+      this._movingAverage.update();
+
     this._constraints.shouldUpdate = false;
     this._constraints.shouldRender = true;
   }
@@ -133,32 +191,16 @@ class CandleStickChartCore {
     ctx.rect(margin + size.x, margin, x.dx, y.dy);
     ctx.clip();
 
-    this._plots.forEach(p => p.render(ctx));
+    if (this._linePlot.isActive())
+      this._linePlot.render(ctx);
+
+    if (this._candlePlot.isActive())
+      this._candlePlot.render(ctx);
+
+    if (this._movingAverage.isActive())
+      this._movingAverage.render(ctx);
 
     ctx.restore();
-  }
-
-  private _binarySearch(time: number): number {
-    const {floor} = Math;
-    const data = this._data;
-
-    let min = 0;
-    let max = data.length - 1;
-    let pivot = floor(max / 2);
-    while (pivot !== min && pivot !== max) {
-      const t = data[pivot].time;
-      if (time > t) {
-        min = pivot;
-        pivot += floor((max - pivot) / 2);
-      } else if (time < t) {
-        max = pivot;
-        pivot -= floor((pivot - min) / 2);
-      } else if (t === time) {
-        break;
-      }
-    }
-
-    return pivot;
   }
   
   private _drawBackground(ctx: CanvasRenderingContext2D) {
@@ -168,4 +210,4 @@ class CandleStickChartCore {
   }
 }
 
-export default CandleStickChartCore;
+export default ChartCore;
